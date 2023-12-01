@@ -140,6 +140,7 @@ byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
   // Send remaining segment, if it exists
   if (sn_under_segmentation != INVALID_RLC_SN) {
     if (tx_window->has_sn(sn_under_segmentation)) {
+      // JB: IMPORTANT!
       return build_continued_sdu_segment((*tx_window)[sn_under_segmentation], grant_len);
     } else {
       sn_under_segmentation = INVALID_RLC_SN;

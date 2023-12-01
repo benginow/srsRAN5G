@@ -1,27 +1,4 @@
-/*
- *
- * Copyright 2021-2023 Software Radio Systems Limited
- *
- * This file is part of srsRAN.
- *
- * srsRAN is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * srsRAN is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * A copy of the GNU Affero General Public License can be found in
- * the LICENSE file in the top-level directory of this distribution
- * and at http://www.gnu.org/licenses/.
- *
- */
-
-/// \file
-/// \brief Benchmarks of the DU-high latency.
+// we want to fuzz such that we can pinpoint where 
 
 #include "lib/du_high/du_high_executor_strategies.h"
 #include "lib/du_high/du_high_impl.h"
@@ -38,37 +15,25 @@
 using namespace srsran;
 using namespace srs_du;
 
-/// \brief Parameters of the benchmark.
-struct bench_params {
-  /// \brief Number of runs for the benchmark. Each repetition corresponds to a slot.
-  unsigned nof_repetitions = 100;
-};
-
-struct fuzzed_params {
-  unsigned int num_ues;
-  unsigned int num_pdus_sent;
-
-};
-
-
-static void usage(const char* prog, const bench_params& params)
+static void usage(const char* prog)
 {
   fmt::print("Usage: {} [-R repetitions] [-s silent]\n", prog);
-  fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
+  // JB TODO: possibly print out the number of times we have fuzzed, but I have a feeling honggfuzz would already output this
+  fmt::print("\t-R Repetitions [Default {}]\n", 1);
   fmt::print("\t-h Show this message\n");
 }
 
-static void parse_args(int argc, char** argv, bench_params& params)
+static void parse_args(int argc, char** argv)
 {
   int opt = 0;
   while ((opt = getopt(argc, argv, "R:h")) != -1) {
     switch (opt) {
-      case 'R':
-        params.nof_repetitions = std::strtol(optarg, nullptr, 10);
-        break;
+      // case 'R':
+      //   params.nof_repetitions = std::strtol(optarg, nullptr, 10);
+      //   break;
       case 'h':
       default:
-        usage(argv[0], params);
+        usage(argv[0]);
         exit(0);
     }
   }
@@ -166,6 +131,7 @@ public:
   f1u_tx_delivery_handler& get_tx_delivery_handler() override { return *this; }
   f1u_tx_sdu_handler&      get_tx_sdu_handler() override { return *this; }
 
+  // JB does this become a 
   void handle_pdu(nru_dl_message msg) override {}
   void handle_transmit_notification(uint32_t highest_pdcp_sn) override {}
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override {}
@@ -376,6 +342,7 @@ public:
 };
 
 /// \brief Benchmark DU-high for 1 UE, DL only traffic using an RLC UM bearer.
+/// JB: do we want to test UL traffic?
 void benchmark_one_ue_dl_only_rlc_um(benchmarker& bm)
 {
   std::string         benchname = "DL only, 1 UE, RLC UM";
@@ -410,11 +377,13 @@ int main(int argc, char** argv)
   srslog::init();
 
   // Parses benchmark parameters.
-  bench_params params{};
-  parse_args(argc, argv, params);
+  // bench_params params{};
+  // JB what are these args when this test is actually run?
+  parse_args(argc, argv);
+  // , params);
 
   // Start benchmarker.
-  benchmarker bm("DU-High", params.nof_repetitions);
+  benchmarker bm("DU-High", 100);
 
   // Run scenarios.
   benchmark_one_ue_dl_only_rlc_um(bm);
